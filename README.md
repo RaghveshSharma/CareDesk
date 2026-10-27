@@ -66,8 +66,8 @@ In busy outpatient clinics, high-concurrency booking conflicts, unauthorized acc
 # 1. Install all dependencies across root, server, and client
 npm run setup
 
-# 2. Seed database with certified demo accounts, doctor shift schedules, and patients
-npm run seed
+# 2. Seed a dedicated demo database with certified demo accounts, doctor shift schedules, and patients
+DEMO_MONGODB_URI="mongodb+srv://<demo-user>:<password>@cluster.mongodb.net/caredesk_demo" npm run seed
 ```
 
 Start the application:
@@ -277,15 +277,15 @@ Schedule modification is protected on the server (`PUT /api/admin/doctors/:id/sc
 CareDesk includes automated tests to verify concurrency and scheduling rules:
 
 ```bash
-# Run the automated interval-overlap and slot alignment test suite
-npm test
+# Run the automated interval-overlap and slot alignment test suite against a dedicated test database
+TEST_MONGODB_URI="mongodb+srv://<test-user>:<password>@cluster.mongodb.net/caredesk_test" npm test
 ```
 
 ### What `npm test` Exercises:
 1. **Unapproved Slot Alignment**: Attempts to book an unaligned start time (`14:10`) that falls between standard slots. Asserts server rejection (`400 Bad Request`).
 2. **Genuine Interval Overlap**: Books a baseline slot (`14:00 - 14:35`) and attempts to book an approved slot start time (`14:25`) that falls inside the first appointment's duration. Asserts server rejection (`409 Conflict`).
 3. **Database Index Verification**: Checks that MongoDB Atlas reports `doctorId_1_startTime_1` as an active partial unique index.
-4. **Zero Residual Artifacts**: All test appointments are automatically purged from the database after testing. Supports `TEST_MONGODB_URI` for completely isolated test clusters.
+4. **Strict Record Isolation**: Only the test-created appointment records are removed by ID upon completion. Does not touch or delete any existing doctor appointments. Requires a dedicated `TEST_MONGODB_URI` to prevent accidental mutation of primary databases.
 
 ---
 
@@ -313,13 +313,13 @@ When the frontend is deployed on **Vercel** (`https://*.vercel.app`) and the bac
    - **Start Command**: `node index.js`
 4. Set the following **Environment Variables**:
 
-| Variable Name | Example Value | Purpose |
+| Variable Name | Value Guide | Purpose |
 | :--- | :--- | :--- |
 | `NODE_ENV` | `production` | Enables secure `SameSite=None` cookies and proxy handling |
 | `PORT` | `5000` | Port for Express listener |
-| `MONGODB_URI` | `mongodb+srv://user:pass@cluster.mongodb.net/caredesk` | MongoDB Atlas Replica Set connection string |
-| `JWT_SECRET` | `caredesk_production_jwt_secret_key_2026_supersecure` | Minimum 32-character signing key |
-| `CLIENT_URL` | `https://your-caredesk-frontend.vercel.app` | Your Vercel frontend origin |
+| `MONGODB_URI` | `mongodb+srv://<username>:<password>@cluster.mongodb.net/caredesk` | Live MongoDB Atlas connection URI (Configure in Render Dashboard only, never commit) |
+| `JWT_SECRET` | `<generated-32+-char-random-secret>` | Strong cryptographic signing secret (Generate with `crypto.randomBytes(32).toString('hex')`) |
+| `CLIENT_URL` | `https://your-caredesk-frontend.vercel.app` | Exact production frontend URL (Prevents unauthorized cross-origin requests) |
 
 5. Click **Create Web Service**. When deployment completes, copy your Render URL (e.g. `https://caredesk-api.onrender.com`).
 
