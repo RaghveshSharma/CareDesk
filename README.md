@@ -28,7 +28,7 @@
 | Component | Platform | Live URL | Details |
 | :--- | :--- | :--- | :--- |
 | 🖥️ **Web Application (SPA)** | **Vercel** | **[https://caredesk-umber.vercel.app](https://caredesk-umber.vercel.app)** | Production React 19 SPA deployed on Vercel Edge CDN |
-| ⚙️ **API Gateway (Backend)** | **Render** | **[https://caredesk-4lag.onrender.com](https://caredesk-4lag.onrender.com)** | Express 4 Node.js ESM Web Service with reverse proxy trust |
+| ⚙️ **API Gateway (Backend)** | **Render** | **[https://caredesk-41sq.onrender.com](https://caredesk-41sq.onrender.com)** | Express 4 Node.js ESM Web Service with reverse proxy trust |
 | 🍃 **Database** | **MongoDB Atlas** | Production Cluster (`caredesk`) | Multi-region replica set supporting partial unique indexes |
 | 🐙 **Source Code** | **GitHub** | **[https://github.com/RaghveshSharma/CareDesk](https://github.com/RaghveshSharma/CareDesk)** | Full version-controlled Git repository with clean commit history |
 
