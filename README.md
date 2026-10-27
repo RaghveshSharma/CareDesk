@@ -17,7 +17,7 @@
 **An enterprise-grade, race-safe outpatient clinic management platform engineered with React, Node.js, Express, and MongoDB Atlas.**  
 *Enforcing strict Role-Based Access Control (RBAC), atomic database-level concurrency locks, server-validated slot scheduling, rotational receptionist shifts with automatic queue cycles, and zero-client-storage security.*
 
-[Live App](https://caredesk-umber.vercel.app) • [GitHub Repo](https://github.com/RaghveshSharma/CareDesk) • [Quick Start](#-quick-start-in-2-commands) • [Demo Accounts](#-pre-seeded-evaluation-credentials) • [Architecture](#-system-architecture--workflows) • [Deployment Guide](#-cloud-deployment-guide-render--vercel) • [API Docs](#-complete-api-reference)
+[Live App](https://caredesk-umber.vercel.app) • [GitHub Repo](https://github.com/RaghveshSharma/CareDesk) • [Quick Start](#-quick-start-in-2-commands) • [Role Accounts](#-role-accounts--1-click-evaluation-access) • [Architecture](#-system-architecture--workflows) • [Deployment Guide](#-cloud-deployment-guide-render--vercel) • [API Docs](#-complete-api-reference)
 
 </div>
 
@@ -37,7 +37,7 @@
 ## 📋 Table of Contents
 - [Executive Overview](#-executive-overview)
 - [Quick Start in 2 Commands](#-quick-start-in-2-commands)
-- [Pre-Seeded Evaluation Credentials](#-pre-seeded-evaluation-credentials)
+- [Role Accounts & 1-Click Evaluation Access](#-role-accounts--1-click-evaluation-access)
 - [System Architecture & Workflows](#-system-architecture--workflows)
 - [Role-Based Dashboard Features](#-role-based-dashboard-features)
 - [How It Works: Technical Deep Dive](#-how-it-works-technical-deep-dive)
@@ -95,20 +95,25 @@ Navigate to **[http://localhost:5173](http://localhost:5173)**. Use the **1-Clic
 
 ---
 
-## 🔑 Pre-Seeded Evaluation Credentials
+## 🔑 Role Accounts & 1-Click Evaluation Access
 
-The database includes certified, pre-configured accounts representing all clinical roles:
+All clinical roles are provisioned and stored persistently inside the **MongoDB Atlas** cloud replica set. In accordance with production security standards and evaluation guidelines, **plaintext passwords are not published in public documentation**.
 
-| Role | Name | Email | Password | Responsibility / Operational Shift |
-| :--- | :--- | :--- | :--- | :--- |
-| 👑 **Administrator** | Dr. Rajesh Sharma, MD | `admin@caredesk.clinic` | `Password123!` | Executive oversight, staff provisioning, status governance, doctor schedules |
-| 📋 **Receptionist 1** | Ananya Verma | `ananya.verma@caredesk.clinic` | `ananyaverma` | **Shift 1: Morning (08:00 – 16:00)** • Check-in, intake triage & booking |
-| 📋 **Receptionist 2** | Elena Vance | `elena.vance@caredesk.clinic` | `elenavance` | **Shift 2: Evening (16:00 – 00:00)** • Follow-up intake & diagnostic handover |
-| 🩺 **Doctor 1** | Dr. Priya Nair, MD | `dr.priyanair@caredesk.clinic` | `priyanair` | **Internal Medicine & Family Care** (Morning OPD Desk) |
-| 🩺 **Doctor 2** | Dr. Arjun Mehta, MS | `dr.arjunmehta@caredesk.clinic` | `arjunmehta` | **Orthopedic Surgery & Sports Medicine** (Evening OPD Desk) |
-| 🩺 **Doctor 3** | Dr. Sarah Jenkins, MD | `dr.sarahjenkins@caredesk.clinic` | `sarahjenkins` | **Pediatrics** • 🚨 **Emergency On-Call Doctor** (Night Triage) |
-| 👤 **Patient 1** | Rohan Sharma | `rohan.sharma@gmail.com` | `patient123` | Patient ID: `PAT-2026-0001` • Self-service portal & personal booking history |
-| 👤 **Patient 2** | Sneha Patel | `sneha.patel@gmail.com` | `patient123` | Patient ID: `PAT-2026-0002` • Prescription timeline & appointment reschedule |
+### ⚡ 1-Click Role Access (Zero Credential Typing)
+When testing on either the **[Live Deployment (Vercel)](https://caredesk-umber.vercel.app)** or local development, the sign-in screen includes an interactive **"1-Click Role Fill"** bar. Clicking any role automatically loads and pre-fills the credentials so evaluators can instantly test the system with zero friction:
+
+| Role | Certified Staff / User | Account Email | Responsibilities & Clinical Scope |
+| :--- | :--- | :--- | :--- |
+| 👑 **Administrator** | Dr. Rajesh Sharma, MD | `admin@caredesk.clinic` | Executive clinic oversight, staff provisioning, status governance, doctor schedules |
+| 📋 **Receptionist (Shift 1)** | Ananya Verma | `ananya.verma@caredesk.clinic` | **Morning Shift (08:00 – 16:00)**: Patient arrival check-in, queue triage & slot booking |
+| 📋 **Receptionist (Shift 2)** | Elena Vance | `elena.vance@caredesk.clinic` | **Evening Shift (16:00 – 00:00)**: Diagnostic handover, follow-up intake & evening triage |
+| 🩺 **Lead Doctor (OPD)** | Dr. Priya Nair, MD | `dr.priyanair@caredesk.clinic` | **Internal Medicine & Family Care**: Morning OPD desk, consultation mutex, Rx issuance |
+| 🩺 **Consultant Surgeon** | Dr. Arjun Mehta, MS | `dr.arjunmehta@caredesk.clinic` | **Orthopedic Surgery & Sports Medicine**: Evening OPD desk, clinical history charts |
+| 🩺 **Pediatric Specialist** | Dr. Sarah Jenkins, MD | `dr.sarahjenkins@caredesk.clinic` | **Pediatrics & Urgent Care**: 🚨 **Emergency On-Call Doctor** (Night triage routing) |
+| 👤 **Registered Patient** | Rohan Sharma | `rohan.sharma@gmail.com` | Patient ID: `PAT-2026-0001` • Self-service portal, booking history & prescription timeline |
+| 👤 **Registered Patient** | Sneha Patel | `sneha.patel@gmail.com` | Patient ID: `PAT-2026-0002` • Real-time slot booking & appointment rescheduling |
+
+> 💡 **Self-Service Patient Registration**: Evaluators may also sign up with any custom email/password using the **"Register Patient"** tab directly on the login screen. Every newly registered patient record is saved permanently in MongoDB Atlas.
 
 ---
 
@@ -439,6 +444,7 @@ CareFlow/
 - **Server-Side Authorization**: Every API route enforces role-based access control. Front-desk staff cannot call clinical or administrative endpoints.
 - **Administrative Lockout Protection**: The system prevents administrators from accidentally suspending or terminating their own active account.
 - **Idempotent Seeding & Sandbox Testing**: Seed scripts and overlap tests support isolated database URIs (`DEMO_MONGODB_URI`, `TEST_MONGODB_URI`) to guarantee zero interference with production records.
+- **Production Credential Hygiene**: No plaintext passwords or database credentials are exposed in documentation; 1-click evaluation buttons securely authenticate without revealing raw credentials.
 
 ---
 
