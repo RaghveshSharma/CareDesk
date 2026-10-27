@@ -82,10 +82,11 @@ router.post(['/register', '/register-patient'], async (req, res) => {
 
     const token = generateToken(user);
 
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('caredesk_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 8 * 60 * 60 * 1000,
     });
 

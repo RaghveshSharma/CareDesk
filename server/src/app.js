@@ -13,13 +13,18 @@ const app = express();
 // Trust reverse proxy for Render / Cloud deployments (enables secure cookies behind HTTPS proxy)
 app.set('trust proxy', 1);
 
-// Middleware
+// Normalize and prepare allowed origins
+const clientUrls = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((u) => u.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
-  process.env.CLIENT_URL,
-].filter(Boolean);
+  ...clientUrls,
+];
 
 app.use(
   cors({
@@ -28,9 +33,18 @@ app.use(
       if (!origin) {
         return callback(null, true);
       }
-      if (allowedOrigins.includes(origin)) {
+
+      const normalizedOrigin = origin.replace(/\/$/, '');
+
+      // Allow if exact match, or if on localhost during development, or any vercel.app deployment
+      if (
+        allowedOrigins.includes(normalizedOrigin) ||
+        (process.env.NODE_ENV !== 'production' && normalizedOrigin.startsWith('http://localhost:')) ||
+        normalizedOrigin.endsWith('.vercel.app')
+      ) {
         return callback(null, true);
       }
+
       // Strictly reject origins outside the approved whitelist
       const corsError = new Error(`CORS Error: Origin '${origin}' is not authorized.`);
       corsError.statusCode = 403;
