@@ -40,9 +40,9 @@ const startServer = async () => {
       console.log(`👑 Admin account ready: ${admin.email}`);
     }
 
-    const server = app.listen(PORT, () => {
-      console.log(`🚀 CareDesk Server is running at http://localhost:${PORT}`);
-      console.log(`📋 Health check: http://localhost:${PORT}/api/health`);
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 CareDesk Server is running on port ${PORT} (0.0.0.0:${PORT})`);
+      console.log(`📋 Health check: /api/health`);
     });
 
     server.on('error', (err) => {
