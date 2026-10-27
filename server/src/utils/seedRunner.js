@@ -19,10 +19,20 @@ if (!process.env.MONGODB_URI) {
 }
 
 export const seedDatabase = async () => {
+  // Use dedicated DEMO_MONGODB_URI if specified to isolate demo seeding from preserved database
+  const isDedicatedDemo = !!process.env.DEMO_MONGODB_URI;
   const mongoUri =
-    process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/caredesk';
+    process.env.DEMO_MONGODB_URI ||
+    process.env.MONGODB_URI ||
+    'mongodb://127.0.0.1:27017/caredesk_demo';
 
   console.log('🍃 Connecting to MongoDB for database seeding...');
+  if (isDedicatedDemo) {
+    console.log('🔒 Using dedicated demo database: DEMO_MONGODB_URI');
+  } else {
+    console.log('⚠️ Running against primary database. Existing records, appointments, and histories are strictly preserved.');
+  }
+
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(mongoUri);
   }

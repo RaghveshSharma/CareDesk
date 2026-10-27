@@ -1,5 +1,6 @@
 import express from 'express';
 import { Patient } from '../models/Patient.js';
+import { Appointment } from '../models/Appointment.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -38,23 +39,42 @@ router.get('/search', authenticate, requireRole('receptionist'), async (req, res
 });
 
 // GET /api/patients/:id
-// Accessible by staff (receptionist, doctor, admin) or the patient themselves (own record only)
+// Accessible by receptionist/admin, patient (own record only), or doctor (assigned patients only)
 router.get('/:id', authenticate, async (req, res) => {
   try {
-    // If the authenticated user is a patient, strictly restrict them to their own record
+    const patientId = req.params.id;
+
+    // 1. If the authenticated user is a patient, strictly restrict them to their own record
     if (req.user.role === 'patient') {
       const ownPatientId = (req.patient?._id || req.user.patientProfile || req.user.patientId)?.toString();
-      if (!ownPatientId || ownPatientId !== req.params.id) {
+      if (!ownPatientId || ownPatientId !== patientId) {
         return res.status(403).json({
           error: 'Access denied: Patients may only access their own personal health record.',
         });
       }
     }
 
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findById(patientId);
     if (!patient) {
       return res.status(404).json({ error: 'Patient record not found' });
     }
+
+    // 2. If the authenticated user is a doctor, verify they have an appointment assigned to this patient
+    if (req.user.role === 'doctor') {
+      if (!req.user.doctorId) {
+        return res.status(403).json({ error: 'Doctor profile not associated with this account.' });
+      }
+      const hasAppointment = await Appointment.exists({
+        doctorId: req.user.doctorId,
+        patientId: patient._id,
+      });
+      if (!hasAppointment) {
+        return res.status(403).json({
+          error: 'Access denied: Doctors may only view clinical records of patients assigned to their consultations.',
+        });
+      }
+    }
+
     return res.json({ patient });
   } catch (error) {
     return res.status(500).json({ error: 'Failed to fetch patient details' });

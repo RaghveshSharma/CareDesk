@@ -7,7 +7,8 @@ import { validateSlotForBooking } from '../services/slotService.js';
 dotenv.config();
 
 const testIntervalOverlap = async () => {
-  await mongoose.connect(process.env.MONGODB_URI);
+  const mongoUri = process.env.TEST_MONGODB_URI || process.env.DEMO_MONGODB_URI || process.env.MONGODB_URI;
+  await mongoose.connect(mongoUri);
   const doctor = await Doctor.findOne({ isActive: true });
   console.log('Testing interval overlap for doctor:', doctor.displayName);
 

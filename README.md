@@ -193,7 +193,7 @@ stateDiagram-v2
 | `PATCH` | `/api/appointments/:id/complete-visit` | Doctor (Self Only) | Saves notes/Rx, releases doctor lock, marks completed |
 | `PATCH` | `/api/appointments/:id/cancel` | Receptionist / Patient| Cancels appointment, sets `isCancelled: true`, frees slot |
 | `PATCH` | `/api/appointments/:id/no-show` | Receptionist | Marks patient as no-show |
-| `GET` | `/api/patients/:id` | Staff or Patient (Self)| Patient health profile. Patients may **only view their own record** |
+| `GET` | `/api/patients/:id` | Role-Restricted | Patient health profile. Patients may **only view their own record**; Doctors may **only view patients assigned to their appointments** |
 | `GET` | `/api/patients/search` | Receptionist | Live patient phone/name search for desk intake |
 | `GET` | `/api/patient/appointments` | Patient Only | Chronological timeline of patient's own bookings & prescriptions |
 | `GET` | `/api/doctors` | Authenticated | Lists all active doctors, specialties, and profiles |
@@ -210,11 +210,11 @@ stateDiagram-v2
 
 ### 1. `seedRunner.js` (Repeatable Demo Provisioning via `npm run seed`)
 * **Why it exists**: External reviewers and automated graders clone the repository into fresh environments and test `npm run seed` to verify setup repeatability. Previously, the root `package.json` had a `"seed"` script pointing to a non-existent file, causing reviewer installations to crash.
-* **Safe for Existing Databases**: `seedRunner.js` is **100% idempotent**. It checks whether accounts (`admin@caredesk.clinic`, doctors, receptionists, patients) already exist in MongoDB Atlas. If present, it preserves all existing appointments, carts, and histories without wiping or duplicating anything.
+* **Preserving Existing Databases**: `seedRunner.js` supports `DEMO_MONGODB_URI` so it can be called against a dedicated demo database rather than a database containing preserved records. When run against any database, it is **100% idempotent**: it checks whether accounts (`admin@caredesk.clinic`, doctors, receptionists, patients) already exist and preserves all existing appointments, consults, and clinical histories without wiping or duplicating anything.
 
 ### 2. `testOverlap.js` (Automated Interval Overlap Verification via `npm test`)
 * **Why it exists**: Standard tests only check duplicate bookings (booking the exact same slot start time twice). The reviewer required automated proof that the server rejects a genuine **interval overlap** where two appointments have *different* start times (e.g., an existing booking spanning `14:00 - 14:35` and a candidate request at `14:25`).
-* **Zero Leftover Artifacts**: The test runs against an isolated future calendar date (`2026-10-29`), asserts proper `400` and `409` rejections, and automatically deletes all temporary test records upon completion.
+* **Zero Leftover Artifacts**: The test runs against an isolated future calendar date (`2026-10-29`), asserts proper `400` and `409` rejections, and automatically deletes all temporary test records upon completion. It also supports `TEST_MONGODB_URI` to target a dedicated test cluster.
 
 ---
 
