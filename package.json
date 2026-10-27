@@ -1,0 +1,19 @@
+{
+  "name": "caredesk-workflow-system",
+  "version": "1.0.0",
+  "description": "CareDesk — Clinic Appointment and Visit Workflow System",
+  "scripts": {
+    "setup": "npm install && npm --prefix server install && npm --prefix client install",
+    "seed": "node server/src/utils/seedRunner.js",
+    "server": "node server/index.js",
+    "server:dev": "node --watch server/index.js",
+    "client": "npm --prefix client run dev",
+    "build": "npm --prefix client run build",
+    "test": "node server/src/utils/testOverlap.js",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
+    "start": "node server/index.js"
+  },
+  "keywords": ["clinic", "workflow", "receptionist", "doctor", "appointments"],
+  "author": "Antigravity",
+  "license": "MIT"
+}
