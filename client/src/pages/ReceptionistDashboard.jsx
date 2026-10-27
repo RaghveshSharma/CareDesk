@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { api } from '../services/api';
+import { api, apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { StatusBadge } from '../components/StatusBadge';
@@ -244,7 +244,7 @@ export const ReceptionistDashboard = () => {
   // Demonstration: Try accessing doctor-only backend API
   const handleTestDoctorRouteSecurity = async () => {
     try {
-      const res = await fetch('/api/doctors/me/profile', { credentials: 'include' });
+      const res = await apiFetch('/api/doctors/me/profile');
       const data = await res.json();
       if (!res.ok) {
         alert(

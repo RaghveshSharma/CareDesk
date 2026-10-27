@@ -156,10 +156,11 @@ router.post('/login', async (req, res) => {
 
     const token = generateToken(user);
 
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('caredesk_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge: 8 * 60 * 60 * 1000,
     });
 
@@ -237,9 +238,11 @@ router.get('/me', authenticate, async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
   res.clearCookie('caredesk_token', {
     httpOnly: true,
-    sameSite: 'lax',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
   });
   return res.json({ message: 'Signed out successfully' });
 });

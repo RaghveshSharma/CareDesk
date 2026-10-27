@@ -10,6 +10,9 @@ import patientPortalRoutes from './routes/patientPortalRoutes.js';
 
 const app = express();
 
+// Trust reverse proxy for Render / Cloud deployments (enables secure cookies behind HTTPS proxy)
+app.set('trust proxy', 1);
+
 // Middleware
 const allowedOrigins = [
   'http://localhost:5173',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { api } from '../services/api';
+import { api, apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { StatusBadge } from '../components/StatusBadge';
@@ -278,10 +278,9 @@ export const DoctorDashboard = () => {
 
   const handleTestReceptionistRouteSecurity = async () => {
     try {
-      const res = await fetch('/api/patients', {
+      const res = await apiFetch('/api/patients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ fullName: 'Forbidden Patient', phone: '123' }),
       });
       const data = await res.json();
