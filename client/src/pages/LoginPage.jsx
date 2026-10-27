@@ -383,7 +383,7 @@ export const LoginPage = ({ onLoginSuccess }) => {
                 className="demo-pill-btn"
                 id="fill-patient-credentials"
                 onClick={() =>
-                  handleQuickFill('rohan.sharma@example.com', 'rohansharma', 'Patient (Rohan Sharma)')
+                  handleQuickFill('rohan.sharma@gmail.com', 'patient123', 'Patient (Rohan Sharma)')
                 }
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -391,7 +391,7 @@ export const LoginPage = ({ onLoginSuccess }) => {
                   <div>
                     <strong>Rohan Sharma (Patient)</strong>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                      rohan.sharma@example.com
+                      rohan.sharma@gmail.com
                     </div>
                   </div>
                 </div>

@@ -17,9 +17,20 @@
 **An enterprise-grade, race-safe outpatient clinic management platform engineered with React, Node.js, Express, and MongoDB Atlas.**  
 *Enforcing strict Role-Based Access Control (RBAC), atomic database-level concurrency locks, server-validated slot scheduling, rotational receptionist shifts with automatic queue cycles, and zero-client-storage security.*
 
-[Quick Start](#-quick-start-in-2-commands) • [Demo Accounts](#-pre-seeded-evaluation-credentials) • [Architecture](#-system-architecture--workflows) • [Deployment Guide](#-cloud-deployment-guide-render--vercel) • [API Docs](#-complete-api-reference)
+[Live App](https://caredesk-umber.vercel.app) • [GitHub Repo](https://github.com/RaghveshSharma/CareDesk) • [Quick Start](#-quick-start-in-2-commands) • [Demo Accounts](#-pre-seeded-evaluation-credentials) • [Architecture](#-system-architecture--workflows) • [Deployment Guide](#-cloud-deployment-guide-render--vercel) • [API Docs](#-complete-api-reference)
 
 </div>
+
+---
+
+## 🌐 Live Production Deployments
+
+| Component | Platform | Live URL | Details |
+| :--- | :--- | :--- | :--- |
+| 🖥️ **Web Application (SPA)** | **Vercel** | **[https://caredesk-umber.vercel.app](https://caredesk-umber.vercel.app)** | Production React 19 SPA deployed on Vercel Edge CDN |
+| ⚙️ **API Gateway (Backend)** | **Render** | **[https://caredesk-4lag.onrender.com](https://caredesk-4lag.onrender.com)** | Express 4 Node.js ESM Web Service with reverse proxy trust |
+| 🍃 **Database** | **MongoDB Atlas** | Production Cluster (`caredesk`) | Multi-region replica set supporting partial unique indexes |
+| 🐙 **Source Code** | **GitHub** | **[https://github.com/RaghveshSharma/CareDesk](https://github.com/RaghveshSharma/CareDesk)** | Full version-controlled Git repository with clean commit history |
 
 ---
 
