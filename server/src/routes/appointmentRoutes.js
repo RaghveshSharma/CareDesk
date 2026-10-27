@@ -39,6 +39,12 @@ router.get('/metrics', authenticate, async (req, res) => {
         return res.status(400).json({ error: 'Doctor profile missing for this user' });
       }
       query.doctorId = req.user.doctorId;
+    } else if (req.user.role === 'patient') {
+      const ownPatientId = req.patient?._id || req.user.patientProfile || req.user.patientId;
+      if (!ownPatientId) {
+        return res.status(403).json({ error: 'Patient profile missing for this user' });
+      }
+      query.patientId = ownPatientId;
     }
 
     const [todayCount, checkedInCount, completedCount, inConsultationCount, bookedCount] =
@@ -76,6 +82,13 @@ router.get('/', authenticate, async (req, res) => {
       }
       // Doctor can ONLY ever see their own appointments!
       query.doctorId = req.user.doctorId;
+    } else if (req.user.role === 'patient') {
+      const ownPatientId = req.patient?._id || req.user.patientProfile || req.user.patientId;
+      if (!ownPatientId) {
+        return res.status(403).json({ error: 'Patient profile not linked to this user account.' });
+      }
+      // Patient can ONLY ever see their own personal appointments!
+      query.patientId = ownPatientId;
     } else if (doctorId) {
       query.doctorId = doctorId;
     }
@@ -124,6 +137,15 @@ router.get('/:id', authenticate, async (req, res) => {
       if (appointment.doctorId._id.toString() !== req.user.doctorId.toString()) {
         return res.status(403).json({
           error: 'Access denied: You are not authorized to view appointments assigned to other doctors.',
+        });
+      }
+    } else if (req.user.role === 'patient') {
+      // Role ownership check for patient
+      const ownPatientId = (req.patient?._id || req.user.patientProfile || req.user.patientId)?.toString();
+      const appointmentPatientId = (appointment.patientId?._id || appointment.patientId)?.toString();
+      if (!ownPatientId || appointmentPatientId !== ownPatientId) {
+        return res.status(403).json({
+          error: 'Access denied: You are not authorized to view appointments belonging to other patients.',
         });
       }
     }
@@ -330,6 +352,7 @@ router.patch('/:id/no-show', authenticate, requireRole('receptionist'), async (r
 // PATCH /api/appointments/:id/start-visit
 // Doctor only
 router.patch('/:id/start-visit', authenticate, requireRole('doctor'), async (req, res) => {
+  let newlyAcquiredLock = false;
   try {
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment) {
@@ -343,15 +366,22 @@ router.patch('/:id/start-visit', authenticate, requireRole('doctor'), async (req
       });
     }
 
-    // Race-safe atomic lock acquisition on Doctor document:
-    // Only one concurrent request can transition activeConsultationId from null to appointment._id.
+    // 1. REJECT ALREADY-STARTED VISITS BEFORE ACQUIRING THE LOCK:
+    if (appointment.status === 'in_consultation') {
+      return res.status(400).json({
+        error: 'This visit has already been started and is currently in consultation.',
+      });
+    }
+
+    // Check transition validity before touching the lock
+    checkTransition(appointment.status, 'in_consultation');
+
+    // 2. ATOMIC LOCK ACQUISITION ON DOCTOR DOCUMENT:
+    // Only transitions activeConsultationId from null -> appointment._id
     const lockedDoctor = await Doctor.findOneAndUpdate(
       {
         _id: req.user.doctorId,
-        $or: [
-          { activeConsultationId: null },
-          { activeConsultationId: appointment._id },
-        ],
+        activeConsultationId: null,
       },
       { activeConsultationId: appointment._id },
       { new: true }
@@ -361,26 +391,20 @@ router.patch('/:id/start-visit', authenticate, requireRole('doctor'), async (req
       const activeConsultation = await Appointment.findOne({
         doctorId: req.user.doctorId,
         status: 'in_consultation',
-        _id: { $ne: appointment._id },
       }).populate('patientId', 'fullName');
 
       const activePatient = activeConsultation?.patientId?.fullName || 'another patient';
       return res.status(409).json({
-        error: `Doctor already has an ongoing consultation in progress with ${activePatient}. Please complete and sign off the active consultation before calling a new patient.`,
+        error: `Doctor already has an active consultation in progress with ${activePatient}. Please complete the ongoing consultation before starting another.`,
       });
     }
 
-    try {
-      checkTransition(appointment.status, 'in_consultation');
+    // Flag that this request newly acquired the lock
+    newlyAcquiredLock = true;
 
-      appointment.status = 'in_consultation';
-      appointment.visitStartedAt = appointment.visitStartedAt || new Date();
-      await appointment.save();
-    } catch (transError) {
-      // Revert atomic lock if transition fails
-      await Doctor.findByIdAndUpdate(req.user.doctorId, { activeConsultationId: null });
-      throw transError;
-    }
+    appointment.status = 'in_consultation';
+    appointment.visitStartedAt = appointment.visitStartedAt || new Date();
+    await appointment.save();
 
     const populated = await Appointment.findById(appointment._id)
       .populate('patientId', 'patientId fullName phone email dateOfBirth gender')
@@ -391,6 +415,17 @@ router.patch('/:id/start-visit', authenticate, requireRole('doctor'), async (req
       appointment: populated,
     });
   } catch (error) {
+    // 3. ONLY RELEASE A LOCK THAT THIS REQUEST NEWLY ACQUIRED:
+    if (newlyAcquiredLock) {
+      try {
+        await Doctor.findOneAndUpdate(
+          { _id: req.user.doctorId, activeConsultationId: req.params.id },
+          { activeConsultationId: null }
+        );
+      } catch (revertErr) {
+        console.error('Failed to revert newly acquired consultation lock:', revertErr);
+      }
+    }
     const status = error.statusCode || 400;
     return res.status(status).json({ error: error.message || 'Failed to start visit' });
   }
@@ -455,8 +490,11 @@ router.patch('/:id/complete-visit', authenticate, requireRole('doctor'), async (
     }
     await appointment.save();
 
-    // Release atomic consultation lock on Doctor document:
-    await Doctor.findByIdAndUpdate(appointment.doctorId, { activeConsultationId: null });
+    // Release atomic consultation lock specifically for this appointment:
+    await Doctor.findOneAndUpdate(
+      { _id: appointment.doctorId, activeConsultationId: appointment._id },
+      { activeConsultationId: null }
+    );
 
     const populated = await Appointment.findById(appointment._id)
       .populate('patientId', 'patientId fullName phone email dateOfBirth gender')

@@ -38,9 +38,19 @@ router.get('/search', authenticate, requireRole('receptionist'), async (req, res
 });
 
 // GET /api/patients/:id
-// Accessible by receptionist or doctor (for patient context)
+// Accessible by staff (receptionist, doctor, admin) or the patient themselves (own record only)
 router.get('/:id', authenticate, async (req, res) => {
   try {
+    // If the authenticated user is a patient, strictly restrict them to their own record
+    if (req.user.role === 'patient') {
+      const ownPatientId = (req.patient?._id || req.user.patientProfile || req.user.patientId)?.toString();
+      if (!ownPatientId || ownPatientId !== req.params.id) {
+        return res.status(403).json({
+          error: 'Access denied: Patients may only access their own personal health record.',
+        });
+      }
+    }
+
     const patient = await Patient.findById(req.params.id);
     if (!patient) {
       return res.status(404).json({ error: 'Patient record not found' });

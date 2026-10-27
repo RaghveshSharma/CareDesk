@@ -71,7 +71,8 @@ const testIntervalOverlap = async () => {
   });
   await mongoose.disconnect();
 
-  if (!rejectedA) {
+  if (!rejectedA || !rejectedB) {
+    console.error('❌ FAIL: One or more interval overlap tests did not reject properly.');
     process.exit(1);
   }
 };
